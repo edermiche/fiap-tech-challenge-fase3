@@ -66,8 +66,8 @@ REGRAS_QUALIDADE = {
         campos_obrigatorios=["id_municipio", "id_municipio_nome"],
     ),
     "dim_escola": RegraQualidade(
-        chave_primaria=["id_escola"],
-        campos_obrigatorios=["id_escola", "id_municipio"],
+        chave_primaria=["ano", "id_escola"],
+        campos_obrigatorios=["ano", "id_escola", "id_municipio"],
     ),
     "fato_resultado_brasil": RegraQualidade(
         chave_primaria=["ano", "rede", "nivel_agregacao"],

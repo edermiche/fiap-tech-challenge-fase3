@@ -14,18 +14,23 @@ def listar_arquivos_entidade(caminho_entidade: Path) -> list[Path]:
     if not caminho_entidade.exists():
         raise FileNotFoundError(f"Pasta não encontrada: {caminho_entidade}")
 
+    # Cada extração batch é um snapshot completo. Somar execution_dates
+    # mistura versões corrigidas da mesma observação e duplica o histórico.
+    execucoes = sorted(caminho_entidade.glob("execution_date=*"))
+    origem = execucoes[-1] if execucoes else caminho_entidade
     arquivos = [
         arquivo
-        for arquivo in caminho_entidade.rglob("*")
+        for arquivo in origem.rglob("*")
         if arquivo.is_file()
         and arquivo.suffix.lower() in EXTENSOES_SUPORTADAS
+        and "processado" not in arquivo.relative_to(origem).parts
         and not arquivo.name.endswith("_processado.parquet")
     ]
 
     if not arquivos:
         raise FileNotFoundError(f"Nenhum arquivo encontrado em: {caminho_entidade}")
 
-    return arquivos
+    return sorted(arquivos)
 
 
 def ler_arquivo(caminho_arquivo: Path) -> pd.DataFrame:

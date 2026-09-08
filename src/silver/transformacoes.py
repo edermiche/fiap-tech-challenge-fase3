@@ -264,9 +264,9 @@ def criar_dim_municipio(df_municipio_base: pd.DataFrame, data_processamento: dat
 
 def criar_dim_escola(df_alunos_base: pd.DataFrame, data_processamento: date) -> pd.DataFrame:
     df = (
-        df_alunos_base[["id_escola", "id_municipio", "id_municipio_nome"]]
+        df_alunos_base[["ano", "id_escola", "id_municipio", "id_municipio_nome"]]
         .drop_duplicates()
-        .sort_values(["id_municipio", "id_escola"])
+        .sort_values(["ano", "id_municipio", "id_escola"])
         .reset_index(drop=True)
     )
     df["data_processamento_silver"] = data_processamento.isoformat()

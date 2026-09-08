@@ -97,6 +97,7 @@ def test_deduplicacao_de_dimensao_nao_barra():
     """
     dim_escola = pd.DataFrame(
         {
+            "ano": [2024, 2024],
             "id_escola": ["1", "2"],
             "id_municipio": ["3500000", "3500001"],
         }
