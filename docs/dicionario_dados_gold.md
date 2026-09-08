@@ -1,6 +1,17 @@
 # Dicionário de Dados - Camada Gold
 
+**Adição de 08/09/2026:** `base_modelagem_aluno_enriquecida`, com 52 colunas
+físicas, partição anual e 21 preditores explícitos. O
+[dicionário dos novos atributos](enriquecimento_ibge_censo.md) também
+documenta referências, denominadores e cobertura de 2023–2025.
+
 **Gerado em:** 2026-07-02 18:15:40
+
+**Atualização 07/09/2026:** adicionada `base_modelagem_aluno`, documentada no
+[contrato da Fase 3](base_modelagem_aluno.md). O lake local contém 22 tabelas
+analíticas e `metricas_qualidade`; `meta_uf_fundeb` é opcional e está ausente.
+Os caminhos e volumetrias detalhados abaixo são históricos; para a execução
+atual consulte a [auditoria](analise_prontidao_fase3.md).
 
 ## Visão geral
 
@@ -16,15 +27,15 @@ continham todas as colunas delas mais as variações anuais — ver
 
 ## Notas de cobertura dos dados
 
-Lacunas que vêm da fonte, não do processamento. Nenhuma é erro do pipeline,
-mas todas mudam a leitura das tabelas — e por isso ficam registradas a cada
-execução em `gold.metricas_qualidade` (regra `cobertura_territorial`).
+As junções foram corrigidas para preservar resultados sem meta. Ainda há
+lacunas da fonte; presença de linha territorial não significa resultado
+preenchido. A auditoria distingue as duas situações.
 
 | Tabela | O que esperar | Por quê |
 |---|---|---|
-| `indicador_meta_uf` e derivadas | 24 das 27 UFs em 2024; 26 em 2025 | AC e DF só têm meta a partir de 2025 na fonte, e RR não tem resultado publicado até 2024 (amostra reduzida no Saeb). O cruzamento resultado × meta é `inner join`, então a UF sem um dos lados não aparece no ano |
-| `indicador_meta_municipio` e derivadas | 5232 municípios, de 5550 na `dim_municipio` | 5352 municípios têm resultado em 2024, mas só 5232 têm meta municipal publicada; os 120 restantes ficam fora do cruzamento |
-| `evolucao_meta_resultado_municipio` | `variacao_resultado_ano_anterior` e `variacao_meta_ano_anterior` 100% nulas | O grão municipal só tem 2024: ainda não existe ano anterior para comparar. As colunas passam a ser preenchidas quando a segunda safra municipal for publicada |
+| `indicador_meta_uf` e derivadas | 27 linhas por ano (2023–2025) | Junção à esquerda; em 2024 há 3 UFs sem meta e 1 sem resultado. |
+| `indicador_meta_municipio` e derivadas | 5232 linhas em 2023; 5352 em 2024 | Em 2024, os 120 municípios sem meta são preservados. |
+| `evolucao_meta_resultado_municipio` | Variação do resultado disponível onde existem duas safras | 2023 foi preservado; não há meta de 2023 para calcular variação anual da meta em 2024. |
 | `meta_uf_bolsa_familia` | Colunas de Bolsa Família nulas em 2025 | A fonte do Bolsa Família cobre 2023–2024. O `left join` preserva a linha da meta 2025 com o enriquecimento vazio, em vez de descartá-la |
 | `perfil_aluno_alfabetizacao` | Rede "Privada" com dezenas de alunos em 2024 | A avaliação é censitária na rede pública; a participação privada é residual e não sustenta leitura comparativa |
 

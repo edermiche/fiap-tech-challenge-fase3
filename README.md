@@ -2,6 +2,23 @@
 
 ## Pipeline Híbrido para Análise da Alfabetização no Brasil
 
+**Evolução local de 08/09/2026:** IBGE, Censo Escolar e AEEB 2025 foram
+incorporados em `gold.base_modelagem_aluno_enriquecida`, com 12 novos
+preditores e 1.966.095 avaliações elegíveis de 2025. Veja os
+[dados, cobertura e comandos de reprodução](docs/enriquecimento_ibge_censo.md).
+Esta etapa adiciona uma tabela Gold e quatro conjuntos Silver ao inventário
+de 07/09 abaixo; dados e modelos continuam fora do Git.
+
+**Revisão local de 07/09/2026:** a Gold agora inclui
+`base_modelagem_aluno`, própria para a classificação pedida na Fase 3.
+Consulte a [análise de cobertura e lacunas](docs/analise_prontidao_fase3.md)
+e o [contrato de consumo](docs/base_modelagem_aluno.md). A revisão também
+preserva resultados sem metas e corrige a dimensão escolar para a chave
+`ano + id_escola`; códigos escolares não devem ser cruzados entre anos sem
+correspondência validada. No lake local: 7 entidades batch, 16 tabelas Silver
+e 23 Gold (22 analíticas + qualidade); FUNDEB está ausente. Os números da
+auditoria substituem as contagens históricas nas seções abaixo.
+
 Pipeline de engenharia de dados em Arquitetura Medalhão (Bronze → Silver → Gold) com ingestão híbrida (batch + streaming), construído sobre dados públicos do INEP disponibilizados pela [Base dos Dados](https://basedosdados.org/), para acompanhar o **Indicador Criança Alfabetizada** no Brasil.
 
 **Repositório**: https://github.com/edermiche/fiap-tech-challenge-fase2

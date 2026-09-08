@@ -1,5 +1,16 @@
 # Dicionario de Dados - Camada Silver
 
+**Adição de 08/09/2026:** contextos `contexto_ibge_municipio` e
+`contexto_censo_municipio_rede`, alunos de 2025 em
+`alunos_alfabetizacao_oficial` e registros sem chave em
+`quarentena_alfabetizacao`. [Definições](enriquecimento_ibge_censo.md).
+
+Atualização de 07/09/2026: `dim_escola` preserva a edição da avaliação,
+com coluna `ano`, chave `ano + id_escola` e 79.273 vínculos no lake local.
+O fato deve se relacionar por essa chave. A referência antiga a 42.811
+escolas únicas entre anos não representa uma identidade longitudinal
+comprovada. Consulte [a auditoria](analise_prontidao_fase3.md).
+
 **Camada:** Silver  
 **Origem fisica:** `data/silver/`  
 **Data de referencia dos arquivos:** `execution_date=2026-07-04`  
