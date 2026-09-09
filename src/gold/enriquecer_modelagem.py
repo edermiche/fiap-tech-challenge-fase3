@@ -12,7 +12,7 @@ import pyarrow.parquet as pq
 from src.bronze.download_enriquecimento import FONTES, hash_arquivo, salvar_json
 from src.common.particionamento import ler_particoes, salvar_particionado_por_ano
 from src.gold.base_modelagem import CHAVE, construir_base_modelagem_aluno
-from src.silver.enriquecimento_oficial import ler_alunos_2025, ler_censo, ler_populacao
+from src.silver.enriquecimento_oficial import ler_alunos_2025, ler_censo, ler_idhm, ler_populacao
 
 
 POPULACAO_POR_EDICAO = {2023: 2021, 2024: 2022, 2025: 2024}
@@ -47,19 +47,28 @@ NOVAS_FEATURES = [
     "pct_escolas_material_ped_jogos_censo",
     "salas_utilizadas_censo", "salas_climatizadas_censo", "salas_acessiveis_censo", "salas_utilizadas_fora_censo",
     "matriculas_por_vinculo_docente_censo", "matriculas_por_turma_censo",
+    "idhm_municipio", "idhm_educacao_municipio", "idhm_longevidade_municipio", "idhm_renda_municipio",
 ]
 
 
-def juntar_contextos(base, populacao, censo):
+def juntar_contextos(base, populacao, censo, idhm=None):
     ano = int(base.ano.iloc[0])
     if base.ano.nunique() != 1 or base[CHAVE].isna().any().any() or base.duplicated(CHAVE).any():
         raise ValueError("Base deve conter uma edição e chave válida")
-    if not censo.ano.eq(ano - 1).all() or not populacao.ano.lt(ano).all():
+    if not censo.ano.eq(ano - 1).all() or not populacao.ano.lt(ano).all() or (idhm is not None and not idhm.ano_referencia_idhm.lt(ano).all()):
         raise ValueError("Contexto contemporâneo/futuro não pode entrar na Gold")
     p = populacao.rename(columns={"ano": "ano_referencia_ibge"})
     c = censo.rename(columns={"ano": "ano_referencia_censo"})
+    # Contextos são pequenos e podem ser float32; isso reduz o pico de memória
+    # ao juntar milhões de avaliações da base de alunos.
+    for quadro in (p, c, idhm):
+        if quadro is not None:
+            numericas = quadro.select_dtypes(include="number").columns
+            quadro[numericas] = quadro[numericas].astype("float32")
     resultado = base.merge(p, on="id_municipio", how="left", validate="many_to_one")
     resultado = resultado.merge(c, on=["id_municipio", "rede"], how="left", validate="many_to_one")
+    if idhm is not None:
+        resultado = resultado.merge(idhm, on="id_municipio", how="left", validate="many_to_one")
     resultado["tem_populacao_ibge"] = resultado.populacao_municipio_ibge.notna()
     resultado["tem_censo_escolar"] = resultado.escolas_anos_iniciais_censo.notna()
     if len(resultado) != len(base):
@@ -98,6 +107,7 @@ def executar(lake, execucao, origem):
         if hash_arquivo(bronze / manifesto["arquivo"]) != manifesto["sha256"]:
             raise ValueError(f"Hash da Bronze divergente: {nome}")
         fontes.append(manifesto)
+    idhm = ler_idhm(bronze / "idhm_municipios_2010.csv")
     def silver(nome):
         pasta = lake / "silver" / nome / f"execution_date={origem}"
         for p in sorted(pasta.rglob("*.parquet")):
@@ -131,7 +141,7 @@ def executar(lake, execucao, origem):
         censo = ler_censo(bronze / f"censo_escolar_{ano - 1}.zip", ano - 1)
         for nome, df in [("contexto_ibge_municipio", pop), ("contexto_censo_municipio_rede", censo)]:
             salvar_particionado_por_ano(df, lake / "silver" / nome / f"execution_date={execucao}", f"{nome}.parquet")
-        gold = juntar_contextos(base, pop, censo)
+        gold = juntar_contextos(base, pop, censo, idhm)
         gold["data_processamento_gold"] = execucao
         salvar_particionado_por_ano(gold, destino, "base_modelagem_aluno_enriquecida.parquet")
         validos = gold.loc[gold.elegivel_modelagem]

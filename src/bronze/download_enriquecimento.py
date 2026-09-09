@@ -42,6 +42,12 @@ FONTES = {
         "divulgacao_edicao": None,
         "pagina": "https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/avaliacao-da-alfabetizacao/resultados/2025",
     },
+    "idhm_municipios_2010": {
+        "url": "https://raw.githubusercontent.com/mauriciocramos/IDHM/main/municipal.csv",
+        "extensao": "csv", "ano_referencia": 2010, "tipo": "idhm_municipal",
+        "divulgacao_edicao": None,
+        "pagina": "https://www.undp.org/pt/brazil/idhm-municipios-2010",
+    },
     **{f"censo_escolar_{ano}": {
         # O endpoint público do Inep responde em HTTP; HTTPS encerra TLS
         # neste servidor. Não desabilitamos verificação de certificados.
@@ -92,6 +98,10 @@ def baixar(nome, pasta):
         with zipfile.ZipFile(tmp) as pacote:
             if pacote.testzip() is not None:
                 raise ValueError(f"ZIP inválido: {nome}")
+    elif fonte["extensao"] == "csv":
+        cabecalho = tmp.read_text(encoding="utf-8-sig", errors="strict").splitlines()[0]
+        if "IDHM" not in cabecalho or "Codmun7" not in cabecalho:
+            raise ValueError(f"CSV de IDHM sem colunas esperadas: {nome}")
     else:
         payload = json.loads(tmp.read_text(encoding="utf-8-sig"))
         if not isinstance(payload, list) or len(payload) < 2:

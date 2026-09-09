@@ -107,6 +107,21 @@ def ler_populacao(arquivo: Path, ano: int):
     return saida
 
 
+def ler_idhm(arquivo: Path):
+    df = pd.read_csv(arquivo, sep=";", encoding="utf-8-sig", decimal=",", usecols=[
+        "ANO", "Codmun7", "IDHM", "IDHM_E", "IDHM_L", "IDHM_R"
+    ])
+    df = df.loc[df.ANO.eq(2010)].copy()
+    df["id_municipio"] = df.Codmun7.astype("string").str.replace(r"\.0$", "", regex=True).str.zfill(7)
+    if df.id_municipio.duplicated().any() or not df.id_municipio.str.fullmatch(r"\d{7}").all():
+        raise ValueError("IDHM: códigos municipais inválidos ou duplicados")
+    saida = df.rename(columns={"IDHM": "idhm_municipio", "IDHM_E": "idhm_educacao_municipio",
+                               "IDHM_L": "idhm_longevidade_municipio", "IDHM_R": "idhm_renda_municipio"})
+    saida["ano_referencia_idhm"] = 2010
+    return saida[["id_municipio", "idhm_municipio", "idhm_educacao_municipio",
+                  "idhm_longevidade_municipio", "idhm_renda_municipio", "ano_referencia_idhm"]]
+
+
 def agregar_censo(df: pd.DataFrame, ano: int):
     df = df.copy()
     # O microdado usa 9 como "ignorado" neste campo; não é uma resposta positiva.
