@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.gold.base_modelagem import construir_base_modelagem_aluno
+
 from src.common.particionamento import salvar_particionado_por_ano, ler_tabela_mais_recente
 from src.qualidade.armazenamento import (
     ler_metricas_safra_anterior,
@@ -269,9 +271,12 @@ def processar_indicador_meta_brasil(
     df = (
         df_fato_resultado_brasil
         .merge(
-            df_fato_meta_anual_brasil,
+            df_fato_meta_anual_brasil.loc[
+                df_fato_meta_anual_brasil["ano"].eq(df_fato_meta_anual_brasil["ano_meta"])
+            ],
             on=["ano", "rede", "nivel_agregacao"],
-            how="inner",
+            how="left",
+            validate="one_to_one",
             suffixes=("_resultado", "_meta")
         )
     )
@@ -280,7 +285,8 @@ def processar_indicador_meta_brasil(
     # sem esse filtro, cada linha de resultado se multiplica por uma linha
     # por ano_meta (2024..2030), comparando o mesmo resultado contra metas
     # de anos diferentes.
-    df = df[df["ano"] == df["ano_meta"]].copy()
+    # Ausência de meta não elimina o resultado observado.
+    df["ano_meta"] = df["ano"]
 
     df = aplicar_status_meta(df)
 
@@ -299,14 +305,18 @@ def processar_indicador_meta_uf(
     df = (
         df_fato_resultado_meta_uf
         .merge(
-            df_fato_meta_anual_uf,
+            df_fato_meta_anual_uf.loc[
+                df_fato_meta_anual_uf["ano"].eq(df_fato_meta_anual_uf["ano_meta"])
+            ],
             on=["ano", "sigla_uf", "rede", "nivel_agregacao"],
-            how="inner",
+            how="left",
+            validate="one_to_one",
             suffixes=("_resultado", "_meta")
         )
     )
 
-    df = df[df["ano"] == df["ano_meta"]].copy()
+    # Preserva UFs sem meta para tornar a lacuna visível.
+    df["ano_meta"] = df["ano"]
 
     df = aplicar_status_meta(df)
 
@@ -347,14 +357,18 @@ def processar_indicador_meta_municipio(
     df = (
         df_fato_resultado_meta_municipio
         .merge(
-            df_fato_meta_anual_municipio,
+            df_fato_meta_anual_municipio.loc[
+                df_fato_meta_anual_municipio["ano"].eq(df_fato_meta_anual_municipio["ano_meta"])
+            ],
             on=["ano", "id_municipio", "rede", "nivel_agregacao"],
-            how="inner",
+            how="left",
+            validate="one_to_one",
             suffixes=("_resultado", "_meta")
         )
     )
 
-    df = df[df["ano"] == df["ano_meta"]].copy()
+    # Preserva municípios sem meta, inclusive o ano-base 2023.
+    df["ano_meta"] = df["ano"]
 
     df = aplicar_status_meta(df)
     df = enriquecer_nome_municipio(df, df_dim_municipio)
@@ -636,7 +650,7 @@ def processar_indicador_meta_regiao(
             total_ufs=("sigla_uf", "nunique"),
             total_meta_atingida=("status_meta", lambda serie: int((serie == "Meta atingida").sum())),
             total_abaixo_meta=("status_meta", lambda serie: int((serie == "Abaixo da meta").sum())),
-            total_sem_informacao=("status_meta", lambda serie: int((serie == "Sem informacao").sum())),
+            total_sem_informacao=("status_meta", lambda serie: int((serie == "Sem informação").sum())),
         )
         .reset_index()
     )
@@ -800,8 +814,8 @@ def preparar_alunos_enriquecidos(
     df["id_escola"] = df["id_escola"].astype(str)
 
     escolas = (
-        df_dim_escola[["id_escola", "id_municipio", "id_municipio_nome"]]
-        .drop_duplicates("id_escola")
+        df_dim_escola[["ano", "id_escola", "id_municipio", "id_municipio_nome"]]
+        .drop_duplicates(["ano", "id_escola"])
         .copy()
     )
     escolas["id_escola"] = escolas["id_escola"].astype(str)
@@ -810,7 +824,7 @@ def preparar_alunos_enriquecidos(
     if "id_municipio_nome" in df.columns:
         df = df.drop(columns=["id_municipio_nome"])
 
-    df = df.merge(escolas, on=["id_escola", "id_municipio"], how="left")
+    df = df.merge(escolas, on=["ano", "id_escola", "id_municipio"], how="left", validate="many_to_one")
     municipios = (
         df_dim_municipio[["id_municipio", "id_municipio_nome"]]
         .drop_duplicates("id_municipio")
@@ -1281,6 +1295,19 @@ def processar_camada_gold(data_processamento: date | None = None) -> None:
         df_dim_municipio,
         df_dominio_regiao_uf,
     )
+
+    df_base_modelagem = construir_base_modelagem_aluno(
+        df_alunos_enriquecidos,
+        df_fato_bolsa_familia_municipio,
+        {
+            "municipio": df_fato_meta_anual_municipio,
+            "uf": df_fato_meta_anual_uf,
+            "brasil": df_fato_meta_anual_brasil,
+        },
+    )
+    df_base_modelagem["data_processamento_gold"] = EXECUTION_DATE
+    salvar_gold(df_base_modelagem, "base_modelagem_aluno")
+    del df_base_modelagem
 
     df_perfil_aluno_alfabetizacao = processar_perfil_aluno_alfabetizacao(
         df_alunos_enriquecidos,

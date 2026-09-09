@@ -18,6 +18,22 @@ GOLD_PATH = BASE_PATH / "data" / "gold"
 
 
 DESCRICOES_TABELAS = {
+    "base_modelagem_aluno_enriquecida": {
+        "nome": "Base de modelagem com IBGE e Censo Escolar - Fase 3",
+        "descricao": (
+            "Avaliacoes de 2023, 2024 e 2025 com populacao municipal e contexto "
+            "do Censo Escolar por municipio/rede. Doze novos preditores. "
+            "Consulte docs/enriquecimento_ibge_censo.md para cobertura e limites."
+        ),
+    },
+    "base_modelagem_aluno": {
+        "nome": "Base de modelagem por aluno - Fase 3",
+        "descricao": (
+            "Uma observacao por avaliacao: alvo binario, elegibilidade, territorio, "
+            "historico municipal e pagamentos Bolsa Familia do ano anterior. "
+            "Metas sao contexto; consulte docs/base_modelagem_aluno.md antes de treinar."
+        ),
+    },
     "metricas_qualidade": {
         "nome": "Metricas de qualidade por execucao",
         "descricao": (

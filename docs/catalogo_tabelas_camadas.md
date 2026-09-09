@@ -1,6 +1,20 @@
 # Catalogo de Tabelas por Camada
 
+**Adição de 08/09/2026:** `gold.base_modelagem_aluno_enriquecida`, com
+IBGE/Censo Escolar e avaliações de 2025. Na Silver: `contexto_ibge_municipio`,
+`contexto_censo_municipio_rede`, `alunos_alfabetizacao_oficial` e
+`quarentena_alfabetizacao`. A Bronze guarda os arquivos oficiais em
+`enriquecimento_oficial`. [Contrato e reprodução](enriquecimento_ibge_censo.md).
+
 Este documento descreve o nome e a finalidade das tabelas materializadas nas camadas Bronze, Silver e Gold do pipeline.
+
+Revisão de 07/09/2026: o lake local contém 7 entidades batch, 16 tabelas
+Silver e 23 Gold (22 analíticas + qualidade). `base_modelagem_aluno` é a
+nova tabela de consumo da Fase 3, com contrato em
+[base_modelagem_aluno.md](base_modelagem_aluno.md). FUNDEB listado abaixo
+é legado/opcional e não existe na execução local. `dim_escola` agora é
+particionada por ano, com chave `ano + id_escola`. Consulte a
+[auditoria atual](analise_prontidao_fase3.md) para cobertura e limitações.
 
 ## Visao Geral
 
