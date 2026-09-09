@@ -17,6 +17,10 @@ INDICADORES = {
     "IN_AGUA_POTAVEL": "pct_escolas_agua_potavel_censo",
     "IN_BIBLIOTECA": "pct_escolas_biblioteca_censo",
     "IN_LABORATORIO_INFORMATICA": "pct_escolas_lab_informatica_censo",
+    "IN_SALA_LEITURA": "pct_escolas_sala_leitura_censo",
+    "IN_QUADRA_ESPORTES": "pct_escolas_quadra_esportes_censo",
+    "IN_ENERGIA_REDE_PUBLICA": "pct_escolas_energia_rede_publica_censo",
+    "IN_COMPUTADOR": "pct_escolas_computador_censo",
 }
 CONTAGENS = {"QT_MAT_FUND_AI": "matriculas_anos_iniciais_censo",
              "QT_DOC_FUND_AI": "vinculos_docentes_anos_iniciais_censo",
